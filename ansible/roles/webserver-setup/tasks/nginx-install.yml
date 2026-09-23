@@ -1,0 +1,11 @@
+---
+- name: Install Nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+
+- name: Enable and start Nginx
+  ansible.builtin.systemd_service:
+    name: "{{ webserver_nginx_service }}"
+    enabled: true
+    state: started

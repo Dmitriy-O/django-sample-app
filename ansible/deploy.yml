@@ -1,0 +1,8 @@
+---
+- name: Deploy the Django application
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: true
+  roles:
+    - deploy

@@ -1,0 +1,11 @@
+---
+- name: Restart Django
+  ansible.builtin.systemd_service:
+    name: "{{ deploy_service }}"
+    daemon_reload: true
+    state: restarted
+
+- name: Restart Nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: restarted

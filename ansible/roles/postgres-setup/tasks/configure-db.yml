@@ -1,0 +1,90 @@
+---
+- name: Allow PostgreSQL to listen on its private IP
+  ansible.builtin.lineinfile:
+    path: "{{ postgres_data_directory }}/postgresql.conf"
+    regexp: '^\s*#?\s*listen_addresses\s*='
+    line: "listen_addresses = '{{ ansible_default_ipv4.address }}'"
+  notify: Restart PostgreSQL
+
+- name: Allow application subnets with password authentication
+  ansible.builtin.blockinfile:
+    path: "{{ postgres_data_directory }}/pg_hba.conf"
+    marker: "# {mark} ANSIBLE MANAGED APPLICATION ACCESS"
+    block: |
+      {% for cidr in postgres_allowed_cidrs %}
+      host {{ postgres_db_name }} {{ postgres_db_user }} {{ cidr }} scram-sha-256
+      {% endfor %}
+  notify: Restart PostgreSQL
+
+- name: Apply PostgreSQL configuration before creating the application database
+  ansible.builtin.meta: flush_handlers
+
+- name: Read database password from SSM Parameter Store
+  ansible.builtin.command:
+    argv:
+      - aws
+      - ssm
+      - get-parameter
+      - --name
+      - "{{ postgres_password_parameter }}"
+      - --with-decryption
+      - --query
+      - Parameter.Value
+      - --output
+      - text
+  register: postgres_password_result
+  changed_when: false
+  no_log: true
+
+- name: Check that a database password was returned
+  ansible.builtin.assert:
+    that:
+      - postgres_password_result.stdout | length >= 16
+    fail_msg: Database password is missing or too short
+    quiet: true
+  no_log: true
+
+- name: Check whether the application database user exists
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -tAc
+      - "SELECT 1 FROM pg_roles WHERE rolname = '{{ postgres_db_user }}'"
+      - postgres
+  become_user: postgres
+  register: postgres_user_check
+  changed_when: false
+
+- name: Create the application database user
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -v
+      - ON_ERROR_STOP=1
+      - postgres
+    stdin: >-
+      CREATE ROLE {{ postgres_db_user }} LOGIN PASSWORD
+      '{{ postgres_password_result.stdout | replace("'", "''") }}';
+  become_user: postgres
+  when: postgres_user_check.stdout | trim != "1"
+  no_log: true
+
+- name: Check whether the application database exists
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -tAc
+      - "SELECT 1 FROM pg_database WHERE datname = '{{ postgres_db_name }}'"
+      - postgres
+  become_user: postgres
+  register: postgres_db_check
+  changed_when: false
+
+- name: Create the application database
+  ansible.builtin.command:
+    argv:
+      - createdb
+      - "--owner={{ postgres_db_user }}"
+      - "{{ postgres_db_name }}"
+  become_user: postgres
+  when: postgres_db_check.stdout | trim != "1"

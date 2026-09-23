@@ -1,0 +1,9 @@
+---
+deploy_db_name: hc
+deploy_db_user: hc_app
+deploy_db_port: "5432"
+deploy_db_password_parameter: /django-ansible-lab/db-password
+deploy_secret_key_parameter: /django-ansible-lab/django-secret-key
+deploy_alb_cidrs:
+  - 10.42.0.0/24
+  - 10.42.1.0/24

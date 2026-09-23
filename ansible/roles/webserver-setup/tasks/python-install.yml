@@ -1,0 +1,5 @@
+---
+- name: Install Python and application system dependencies
+  ansible.builtin.dnf:
+    name: "{{ webserver_python_packages }}"
+    state: present

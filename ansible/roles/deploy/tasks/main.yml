@@ -1,0 +1,16 @@
+---
+- name: Load deployment values
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/values/main.yml"
+
+- name: Update code and Python dependencies
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Configure Django environment
+  ansible.builtin.import_tasks: envs.yml
+
+- name: Apply migrations and prepare static files
+  ansible.builtin.import_tasks: migration.yml
+
+- name: Configure and verify application services
+  ansible.builtin.import_tasks: run-server.yml

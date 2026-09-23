@@ -1,0 +1,62 @@
+---
+- name: Install Django systemd service
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ deploy_service }}.service"
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Django Healthchecks application
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      User={{ deploy_user }}
+      Group={{ deploy_user }}
+      WorkingDirectory={{ deploy_app_dir }}
+      EnvironmentFile={{ deploy_env_file }}
+      ExecStart={{ deploy_venv_dir }}/bin/gunicorn --workers {{ deploy_gunicorn_workers }} --bind 127.0.0.1:{{ deploy_gunicorn_port }} hc.wsgi:application
+      Restart=always
+      RestartSec=5
+      NoNewPrivileges=true
+      PrivateTmp=true
+      UMask=0077
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart Django
+
+- name: Enable and start Django
+  ansible.builtin.systemd_service:
+    name: "{{ deploy_service }}"
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Install Nginx proxy configuration
+  ansible.builtin.template:
+    src: "{{ role_path }}/files/nginx.conf"
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "/usr/sbin/nginx -t -c %s"
+  notify: Restart Nginx
+
+- name: Apply pending service restarts
+  ansible.builtin.meta: flush_handlers
+
+- name: Check application through local Nginx
+  ansible.builtin.uri:
+    url: http://127.0.0.1/healthz
+    status_code:
+      - 200
+      - 301
+      - 302
+      - 303
+      - 307
+      - 308
+  register: deploy_health_check
+  until: deploy_health_check is succeeded
+  retries: 12
+  delay: 5

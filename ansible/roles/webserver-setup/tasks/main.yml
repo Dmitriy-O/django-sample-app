@@ -1,0 +1,6 @@
+---
+- name: Prepare Python runtime
+  ansible.builtin.import_tasks: python-install.yml
+
+- name: Prepare Nginx
+  ansible.builtin.import_tasks: nginx-install.yml

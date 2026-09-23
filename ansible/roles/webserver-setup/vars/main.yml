@@ -1,0 +1,10 @@
+---
+webserver_python_packages:
+  - python3.12
+  - python3.12-devel
+  - python3.12-pip
+  - git
+  - gcc
+  - libcurl-devel
+  - openssl-devel
+  - postgresql16

@@ -1,0 +1,8 @@
+---
+- name: Configure the Django web servers
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: true
+  roles:
+    - webserver-setup

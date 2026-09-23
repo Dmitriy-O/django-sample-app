@@ -1,0 +1,84 @@
+---
+- name: Check required values supplied by the SSM association
+  ansible.builtin.assert:
+    that:
+      - db_host is defined
+      - site_root is defined
+      - db_host | length > 0
+      - site_root | length > 0
+    fail_msg: SSM association must supply db_host and site_root
+
+- name: Read database password from Parameter Store
+  ansible.builtin.command:
+    argv:
+      - aws
+      - ssm
+      - get-parameter
+      - --name
+      - "{{ deploy_db_password_parameter }}"
+      - --with-decryption
+      - --query
+      - Parameter.Value
+      - --output
+      - text
+  register: deploy_db_password
+  changed_when: false
+  no_log: true
+
+- name: Read Django secret key from Parameter Store
+  ansible.builtin.command:
+    argv:
+      - aws
+      - ssm
+      - get-parameter
+      - --name
+      - "{{ deploy_secret_key_parameter }}"
+      - --with-decryption
+      - --query
+      - Parameter.Value
+      - --output
+      - text
+  register: deploy_secret_key
+  changed_when: false
+  no_log: true
+
+- name: Verify secret lengths
+  ansible.builtin.assert:
+    that:
+      - deploy_db_password.stdout | length >= 16
+      - deploy_secret_key.stdout | length >= 32
+    quiet: true
+  no_log: true
+
+- name: Assemble Django environment
+  ansible.builtin.set_fact:
+    deploy_environment:
+      DB: postgres
+      DB_HOST: "{{ db_host }}"
+      DB_PORT: "{{ deploy_db_port }}"
+      DB_NAME: "{{ deploy_db_name }}"
+      DB_USER: "{{ deploy_db_user }}"
+      DB_PASSWORD: "{{ deploy_db_password.stdout }}"
+      SECRET_KEY: "{{ deploy_secret_key.stdout }}"
+      DEBUG: "False"
+      SITE_ROOT: "{{ site_root }}"
+      ALLOWED_HOSTS: "{{ site_root | regex_replace('^https?://', '') | regex_replace('/.*$', '') }},localhost"
+  no_log: true
+
+- name: Create protected configuration directory
+  ansible.builtin.file:
+    path: "{{ deploy_env_dir }}"
+    state: directory
+    owner: root
+    group: "{{ deploy_user }}"
+    mode: "0750"
+
+- name: Write Django environment file
+  ansible.builtin.template:
+    src: app.env.j2
+    dest: "{{ deploy_env_file }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart Django
+  no_log: true

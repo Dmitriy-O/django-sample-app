@@ -1,0 +1,24 @@
+---
+- name: Apply Django database migrations
+  ansible.builtin.command:
+    argv:
+      - "{{ deploy_venv_dir }}/bin/python"
+      - manage.py
+      - migrate
+      - --noinput
+    chdir: "{{ deploy_app_dir }}"
+  environment: "{{ deploy_environment }}"
+  become_user: "{{ deploy_user }}"
+  no_log: true
+
+- name: Collect Django static files
+  ansible.builtin.command:
+    argv:
+      - "{{ deploy_venv_dir }}/bin/python"
+      - manage.py
+      - collectstatic
+      - --noinput
+    chdir: "{{ deploy_app_dir }}"
+  environment: "{{ deploy_environment }}"
+  become_user: "{{ deploy_user }}"
+  no_log: true

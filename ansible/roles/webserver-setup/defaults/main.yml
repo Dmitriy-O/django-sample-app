@@ -1,0 +1,3 @@
+---
+webserver_nginx_service: nginx
+webserver_python_binary: /usr/bin/python3.12

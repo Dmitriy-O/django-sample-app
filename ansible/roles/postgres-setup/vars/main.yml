@@ -1,0 +1,4 @@
+---
+postgres_packages:
+  - postgresql16-server
+  - postgresql16

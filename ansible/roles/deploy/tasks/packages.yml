@@ -1,0 +1,59 @@
+---
+- name: Create application group
+  ansible.builtin.group:
+    name: "{{ deploy_user }}"
+    system: true
+
+- name: Create application user
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    system: true
+    create_home: true
+    shell: /sbin/nologin
+
+- name: Prepare application directory
+  ansible.builtin.file:
+    path: "{{ deploy_app_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Update application code from GitHub
+  ansible.builtin.git:
+    repo: "{{ deploy_repository }}"
+    dest: "{{ deploy_app_dir }}"
+    version: "{{ deploy_branch }}"
+    update: true
+    force: false
+  become_user: "{{ deploy_user }}"
+  notify: Restart Django
+
+- name: Prepare virtual environment directory
+  ansible.builtin.file:
+    path: "{{ deploy_venv_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Create Python 3.12 virtual environment
+  ansible.builtin.command:
+    cmd: "{{ deploy_python }} -m venv {{ deploy_venv_dir }}"
+    creates: "{{ deploy_venv_dir }}/bin/python"
+  become_user: "{{ deploy_user }}"
+
+- name: Install application requirements
+  ansible.builtin.pip:
+    requirements: "{{ deploy_app_dir }}/requirements.txt"
+    executable: "{{ deploy_venv_dir }}/bin/pip"
+  become_user: "{{ deploy_user }}"
+  notify: Restart Django
+
+- name: Install pinned Gunicorn
+  ansible.builtin.pip:
+    name: "gunicorn=={{ deploy_gunicorn_version }}"
+    executable: "{{ deploy_venv_dir }}/bin/pip"
+  become_user: "{{ deploy_user }}"
+  notify: Restart Django

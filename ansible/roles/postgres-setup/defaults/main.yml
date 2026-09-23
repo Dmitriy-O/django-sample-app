@@ -1,0 +1,9 @@
+---
+postgres_db_name: hc
+postgres_db_user: hc_app
+postgres_service_name: postgresql
+postgres_data_directory: /var/lib/pgsql/data
+postgres_password_parameter: /django-ansible-lab/db-password
+postgres_allowed_cidrs:
+  - 10.42.10.0/24
+  - 10.42.11.0/24
