@@ -49,6 +49,7 @@
 - name: Check application through local Nginx
   ansible.builtin.uri:
     url: http://127.0.0.1/healthz
+    follow_redirects: none
     status_code:
       - 200
       - 301
