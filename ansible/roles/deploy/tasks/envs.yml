@@ -3,10 +3,10 @@
   ansible.builtin.assert:
     that:
       - db_host is defined
-      - site_root is defined
+      - alb_host is defined
       - db_host | length > 0
-      - site_root | length > 0
-    fail_msg: SSM association must supply db_host and site_root
+      - alb_host | length > 0
+    fail_msg: SSM association must supply db_host and alb_host
 
 - name: Read database password from Parameter Store
   ansible.builtin.command:
@@ -61,8 +61,8 @@
       DB_PASSWORD: "{{ deploy_db_password.stdout }}"
       SECRET_KEY: "{{ deploy_secret_key.stdout }}"
       DEBUG: "False"
-      SITE_ROOT: "{{ site_root }}"
-      ALLOWED_HOSTS: "{{ site_root | regex_replace('^https?://', '') | regex_replace('/.*$', '') }},localhost"
+      SITE_ROOT: "http://{{ alb_host }}"
+      ALLOWED_HOSTS: "{{ alb_host }},localhost"
   no_log: true
 
 - name: Create protected configuration directory

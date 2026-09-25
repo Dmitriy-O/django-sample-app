@@ -6,12 +6,12 @@ locals {
       repository = var.github_repository
       path       = "ansible"
       getOptions = "branch:${var.github_branch}"
+      tokenInfo  = "{{ssm-secure:/django-ansible-lab/github-token}}"
     })
     InstallDependencies = "True"
     Check               = "False"
   }
-
-  deploy_extra_variables = "db_host=${aws_instance.db.private_ip} site_root=http://${aws_lb.app.dns_name}"
+  deploy_extra_variables = "db_host=${aws_instance.db.private_ip} alb_host=${aws_lb.app.dns_name}"
 }
 
 ################
