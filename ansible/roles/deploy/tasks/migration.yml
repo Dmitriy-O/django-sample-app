@@ -22,3 +22,14 @@
   environment: "{{ deploy_environment }}"
   become_user: "{{ deploy_user }}"
   no_log: true
+
+- name: Build offline compressed static assets
+  ansible.builtin.command:
+    argv:
+      - "{{ deploy_venv_dir }}/bin/python"
+      - manage.py
+      - compress
+    chdir: "{{ deploy_app_dir }}"
+  environment: "{{ deploy_environment }}"
+  become_user: "{{ deploy_user }}"
+  no_log: true
