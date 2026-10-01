@@ -60,7 +60,7 @@
       DB_USER: "{{ deploy_db_user }}"
       DB_PASSWORD: "{{ deploy_db_password.stdout }}"
       SECRET_KEY: "{{ deploy_secret_key.stdout }}"
-      DEBUG: "False"
+      DEBUG: "{{ 'True' if deployment_environment == 'development' else 'False' }}"
       SITE_ROOT: "http://{{ alb_host }}"
       ALLOWED_HOSTS: "{{ alb_host }},localhost"
   no_log: true

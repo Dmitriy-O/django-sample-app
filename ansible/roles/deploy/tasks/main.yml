@@ -9,6 +9,25 @@
 - name: Configure Django environment
   ansible.builtin.import_tasks: envs.yml
 
+- name: Configure Django settings with the custom module
+  django_configurator:
+    path: "{{ deploy_app_dir }}/hc/settings.py"
+    environment: "{{ deployment_environment }}"
+    db_host: "{{ db_host }}"
+    db_name: "{{ deploy_db_name }}"
+    db_user: "{{ deploy_db_user }}"
+    db_password: "{{ deploy_db_password.stdout }}"
+    additional_settings: "{{ django_additional_settings }}"
+  environment: "{{ deploy_environment }}"
+  become_user: "{{ deploy_user }}"
+  register: config_result
+  notify: Restart Django
+  no_log: true
+
+- name: Report Django configuration result
+  ansible.builtin.debug:
+    msg: "{{ config_result.message }}"
+
 - name: Apply migrations and prepare static files
   ansible.builtin.import_tasks: migration.yml
 

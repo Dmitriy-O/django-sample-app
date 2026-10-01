@@ -20,14 +20,55 @@
     group: "{{ deploy_user }}"
     mode: "0755"
 
-- name: Update application code from GitHub
+- name: Look up the selected GitHub branch revision
+  ansible.builtin.command:
+    argv:
+      - git
+      - ls-remote
+      - "{{ deploy_repository }}"
+      - "refs/heads/{{ deploy_branch }}"
+  register: deploy_remote_revision
+  changed_when: false
+  become_user: "{{ deploy_user }}"
+
+- name: Check that the branch exists and returned a commit
+  ansible.builtin.assert:
+    that:
+      - deploy_remote_revision.stdout.split() | length == 2
+      - deploy_remote_revision.stdout.split()[0] is match('^[0-9a-f]{40}$')
+      - deploy_remote_revision.stdout.split()[1] == 'refs/heads/' ~ deploy_branch
+    fail_msg: The configured GitHub branch did not return a valid commit
+
+- name: Check whether the application directory is a Git checkout
+  ansible.builtin.stat:
+    path: "{{ deploy_app_dir }}/.git"
+  register: deploy_checkout
+
+- name: Read the currently deployed commit
+  ansible.builtin.command:
+    argv:
+      - git
+      - -C
+      - "{{ deploy_app_dir }}"
+      - rev-parse
+      - HEAD
+  register: deploy_current_revision
+  changed_when: false
+  when: deploy_checkout.stat.exists
+  become_user: "{{ deploy_user }}"
+
+- name: Update application code from GitHub if the commit changed
   ansible.builtin.git:
     repo: "{{ deploy_repository }}"
     dest: "{{ deploy_app_dir }}"
-    version: "{{ deploy_branch }}"
+    version: "{{ deploy_remote_revision.stdout.split()[0] }}"
     update: true
-    force: false
+    # settings.py is managed by django_configurator; reset it only on a new commit.
+    force: true
   become_user: "{{ deploy_user }}"
+  when: >-
+    not deploy_checkout.stat.exists or
+    deploy_current_revision.stdout | default('') != deploy_remote_revision.stdout.split()[0]
   notify: Restart Django
 
 - name: Prepare virtual environment directory

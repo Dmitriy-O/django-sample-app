@@ -1,4 +1,9 @@
 ---
+deployment_environment: production
+django_additional_settings:
+  ALLOWED_HOSTS:
+    - "{{ alb_host }}"
+    - localhost
 deploy_db_name: hc
 deploy_db_user: hc_app
 deploy_db_port: "5432"
