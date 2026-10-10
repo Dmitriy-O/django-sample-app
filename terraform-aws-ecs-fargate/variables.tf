@@ -15,3 +15,8 @@ variable "project_name" {
   type        = string
   default     = "week6-healthchecks"
 }
+variable "vpc_cidr" {
+  description = "IPv4 address range for the lab VPC."
+  type        = string
+  default     = "10.60.0.0/16"
+}
