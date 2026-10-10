@@ -1,0 +1,19 @@
+
+# Container lab: local files
+.env
+.env.*
+!.env.example
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+hc/local_settings.py
+hc.sqlite*
+.venv/
+__pycache__/
+*.py[cod]
+static-collected/
+.DS_Store
+evidence/private/
