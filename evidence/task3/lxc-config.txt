@@ -1,0 +1,38 @@
+architecture: aarch64
+config:
+  image.architecture: arm64
+  image.description: Debian bookworm arm64 (20261011_05:24)
+  image.os: Debian
+  image.release: bookworm
+  image.serial: "20261011_05:24"
+  image.type: squashfs
+  image.variant: default
+  limits.cpu: "1"
+  limits.memory: 256MiB
+  security.idmap.isolated: "true"
+  security.privileged: "false"
+  volatile.base_image: 78fd46232937c7fd20f7baad4f392e794da8e850486047a661d5db635e2126ce
+  volatile.cloud-init.instance-id: 8b6dff17-2237-436c-8103-11b06143c09a
+  volatile.eth0.host_name: vethd3bacbc0
+  volatile.eth0.hwaddr: 10:66:6a:9b:d8:c0
+  volatile.idmap.base: "1065536"
+  volatile.idmap.current: '[{"Isuid":true,"Isgid":false,"Hostid":1065536,"Nsid":0,"Maprange":65536},{"Isuid":false,"Isgid":true,"Hostid":1065536,"Nsid":0,"Maprange":65536}]'
+  volatile.idmap.next: '[{"Isuid":true,"Isgid":false,"Hostid":1065536,"Nsid":0,"Maprange":65536},{"Isuid":false,"Isgid":true,"Hostid":1065536,"Nsid":0,"Maprange":65536}]'
+  volatile.last_state.idmap: '[]'
+  volatile.last_state.power: RUNNING
+  volatile.uuid: d0b2073a-fd7e-427b-87a0-d2d49fb938e7
+  volatile.uuid.generation: d0b2073a-fd7e-427b-87a0-d2d49fb938e7
+devices:
+  eth0:
+    name: eth0
+    network: incusbr0
+    type: nic
+  root:
+    path: /
+    pool: default
+    type: disk
+ephemeral: false
+profiles:
+  - default
+stateful: false
+description: ""
